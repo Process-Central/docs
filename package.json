@@ -1,0 +1,14 @@
+{
+  "name": "processcentral-docs",
+  "version": "1.0.0",
+  "description": "Process Central user & admin documentation (Mintlify) + screenshot capture",
+  "scripts": {
+    "dev": "source ~/.nvm/nvm.sh && nvm use 20 && mintlify dev",
+    "capture": "node scripts/capture-screenshots.js",
+    "capture:auth": "node scripts/capture-screenshots.js --auth",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "playwright": "^1.45.0"
+  }
+}

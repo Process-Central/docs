@@ -1,0 +1,48 @@
+---
+title: "Import & Export SOPs"
+description: "Move SOPs in and out of your organisation."
+---
+
+The **Import/Export** tab in Organisation Settings lets you move SOPs as portable JSON bundles — useful for backups, migrations, or sharing procedures between organisations.
+
+<Frame caption="Import and export SOPs">
+  <img src="/images/screenshots/org-import-export.png" alt="Import and export SOPs" />
+</Frame>
+
+## Export SOPs
+
+<Steps>
+  <Step title="Open Import/Export">
+    In Organisation Settings, select the **Import/Export** tab.
+  </Step>
+  <Step title="Choose what to export">
+    Export **all** SOPs, or select specific ones.
+  </Step>
+  <Step title="Download the bundle">
+    A JSON file downloads to your device (named for your organisation).
+  </Step>
+</Steps>
+
+## Import SOPs
+
+<Steps>
+  <Step title="Select your file">
+    Choose a previously exported JSON bundle.
+  </Step>
+  <Step title="Pick a conflict strategy">
+    Decide what happens when a title already exists:
+    - **Create new** — always add as a new SOP.
+    - **Skip if title exists** — leave existing ones untouched.
+    - **Update if title exists** — update fields and tags on a match.
+  </Step>
+  <Step title="Choose whether to include steps">
+    Include the full step content, or import titles/metadata only.
+  </Step>
+  <Step title="Run the import">
+    Process Central imports the SOPs according to your choices.
+  </Step>
+</Steps>
+
+<Warning>
+Choose your conflict strategy carefully — **Update if title exists** overwrites fields and tags on matching SOPs. Export a backup first if you're unsure.
+</Warning>

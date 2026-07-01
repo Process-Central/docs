@@ -1,0 +1,6 @@
+node_modules/
+.env
+.auth/
+.DS_Store
+*.log
+.mintlify/

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Process Central",
+  "description": "User and administrator documentation for Process Central — the control plane for human and AI work.",
+  "colors": {
+    "primary": "#2563eb",
+    "light": "#3b82f6",
+    "dark": "#1d4ed8"
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "getting-started/signing-in",
+              "getting-started/navigation"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "user-guide/dashboard",
+              "user-guide/sopository",
+              "user-guide/creating-sops",
+              "user-guide/executing-sops",
+              "user-guide/tasks",
+              "user-guide/tags",
+              "user-guide/templates",
+              "user-guide/reporting",
+              "user-guide/process-maps",
+              "user-guide/agentic-ops",
+              "user-guide/profile-settings"
+            ]
+          },
+          {
+            "group": "Administration",
+            "pages": [
+              "admin/overview",
+              "admin/organisation-details",
+              "admin/inviting-users",
+              "admin/managing-users",
+              "admin/assignments",
+              "admin/audit-evidence",
+              "admin/import-export",
+              "admin/subscription-billing",
+              "admin/ai-configuration",
+              "admin/prompt-management"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Support",
+        "href": "mailto:support@processcentral.co.nz"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Open App",
+      "href": "https://app.processcentral.co.nz"
+    }
+  },
+  "footer": {
+    "socials": {
+      "website": "https://www.processcentral.co.nz"
+    }
+  }
+}
