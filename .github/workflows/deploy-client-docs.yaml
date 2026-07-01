@@ -1,0 +1,103 @@
+name: Deploy Process Central Docs to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  Validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      
+      - name: Install Mint
+        run: npm install -g mint
+      
+      - name: Validate Documents
+        run: |
+          mint validate
+ 
+  Stage:
+    runs-on: ubuntu-latest
+    needs: Validate
+    permissions:
+      contents: read
+      deployments: write
+    
+    steps:        
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      
+      - name: Install Mint
+        run: npm install -g mint
+      
+      - name: Export site with Mint
+        run: |
+          mint export
+      
+      - name: Unzip and verify export
+        run: |
+          echo "Listing files before unzip:"
+          ls -la
+          
+          if [ -f export.zip ]; then
+            echo "Creating export directory and unzipping export.zip..."
+            mkdir -p export
+            unzip -o export.zip -d export
+            echo "Contents after unzip:"
+            ls -la export/
+            
+            rm export.zip
+          else
+            echo "ERROR: export.zip not found!"
+            exit 1
+          fi
+      
+      - name: Upload export artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-export
+          path: export
+          
+  Deploy:
+    runs-on: ubuntu-latest
+    needs: Stage
+    permissions:
+      contents: read
+      deployments: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Download export artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-export
+          path: export
+        
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: process-central-docs
+          directory: export
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
