@@ -9,19 +9,41 @@ The **AI & LLM** tab in Organisation Settings is where administrators configure 
   <img src="/images/screenshots/org-ai-llm.png" alt="AI and LLM configuration" />
 </Frame>
 
-## Configure AI
+## Add a provider
+
+Select **Add** on the AI & LLM tab to open the configuration form.
+
+<Frame caption="Add LLM Configuration">
+  <img src="/images/screenshots/AddLLMProvider.png" alt="Add LLM configuration form" />
+</Frame>
 
 <Steps>
-  <Step title="Open AI & LLM">
-    In Organisation Settings, select the **AI & LLM** tab.
+  <Step title="Choose a Provider">
+    e.g. OpenRouter, OpenAI, Ollama or a custom provider.
   </Step>
-  <Step title="Set up your model">
-    Configure the AI/LLM provider and settings for your organisation.
+  <Step title="Name the configuration">
+    A recognisable name such as "OpenRouter - Production".
   </Step>
-  <Step title="Save">
-    Your configuration applies to AI-assisted features across the app.
+  <Step title="Enter the API Key">
+    The credential for the provider.
+  </Step>
+  <Step title="Set the Base URL (optional)">
+    Leave empty to use the provider's default, or point at your own endpoint.
+  </Step>
+  <Step title="Set the Embedding Model Name">
+    Used for semantic search — see the dimension note below.
+  </Step>
+  <Step title="Custom Headers (optional)">
+    JSON headers for CloudFlare Access or other custom authentication.
+  </Step>
+  <Step title="Test Connection, then Save">
+    Confirm it responds via the Edge Function, tick **Set as default provider** if appropriate, and save.
   </Step>
 </Steps>
+
+<Warning>
+The embedding model must produce **1536 dimensions** (e.g. `text-embedding-3-small`). Larger models such as `text-embedding-3-large` (3072) are automatically reduced to 1536 to match the search index.
+</Warning>
 
 ## Related: prompts
 

@@ -38,6 +38,8 @@
               "user-guide/reporting",
               "user-guide/process-maps",
               "user-guide/agentic-ops",
+              "admin/assignments",
+              "admin/audit-evidence",
               "user-guide/profile-settings"
             ]
           },
@@ -48,11 +50,11 @@
               "admin/organisation-details",
               "admin/inviting-users",
               "admin/managing-users",
-              "admin/assignments",
-              "admin/audit-evidence",
               "admin/import-export",
               "admin/subscription-billing",
               "admin/ai-configuration",
+              "admin/automation-providers",
+              "admin/agentic-services",
               "admin/prompt-management"
             ]
           }

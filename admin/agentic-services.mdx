@@ -1,0 +1,57 @@
+---
+title: "Agentic Services"
+description: "Configure AI agent providers and MCP servers for Agentic Ops."
+---
+
+The **Agentic Services** tab in Organisation Settings is where administrators configure the AI agent runners and MCP servers that power [Agentic Ops](/user-guide/agentic-ops).
+
+<Frame caption="Agentic Services in Organisation Settings">
+  <img src="/images/screenshots/org-agentic.png" alt="Agentic services configuration" />
+</Frame>
+
+## Configure an agent provider
+
+Process Central supports agent runners including **Claude Code**, **OpenCode** and **Codex**.
+
+<Steps>
+  <Step title="Open the Agentic Services tab">
+    Organisation switcher → **Organisation Settings** → **Agentic Services**.
+  </Step>
+  <Step title="Enter the runner endpoint and API key">
+    Point it at your agent runner / server endpoint and provide its key.
+  </Step>
+  <Step title="Set the Default Model">
+    See the format note below — this is the most common source of errors.
+  </Step>
+  <Step title="Test the connection">
+    Confirm the runner is reachable before saving.
+  </Step>
+</Steps>
+
+## Default Model format (important)
+
+For **OpenCode**, the model must be written as `<provider-id>/<model-id>`, where the first segment matches a provider defined in the OpenCode server's `opencode.json`:
+
+<CodeGroup>
+```text Correct
+openrouter/anthropic/claude-sonnet-4-6
+ollama/gpt-oss:latest
+```
+```text Incorrect
+qwen/qwen3.5-122b-a10b   # "qwen" is not a configured provider → ProviderModelNotFoundError
+```
+</CodeGroup>
+
+<Warning>
+A bare vendor prefix (e.g. `qwen/...`) fails with **ProviderModelNotFoundError**. The first segment must be the OpenCode **provider id**, not the model vendor.
+</Warning>
+
+## MCP servers
+
+You can register public MCP servers here and attach them to skills.
+
+<Note>
+How an attached MCP server is used **depends on the provider's runner**. For **OpenCode**, MCP servers are loaded from the OpenCode server's own `opencode.json` config — attaching one to a skill in Process Central does not push it to OpenCode. For runners that accept MCP servers per run, the skill's attached servers are forwarded automatically.
+</Note>
+
+See [Agentic Ops](/user-guide/agentic-ops) for creating and running skills and agent tasks.

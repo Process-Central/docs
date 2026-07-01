@@ -23,6 +23,7 @@
 const { chromium } = require('playwright')
 const path = require('path')
 const fs = require('fs')
+const { execSync } = require('child_process')
 
 // Load .env (no dependency on dotenv — keep the script self-contained).
 loadEnv(path.join(__dirname, '..', '.env'))
@@ -145,15 +146,36 @@ async function clickTab(page, label) {
 }
 
 // Open the first real SOP in the SOPository and return true if one was found.
+// The default "cards" view shows category cards first — individual SOP links
+// only appear inside a category — so fall back to opening a category, then the
+// first SOP within it. The table view exposes /sops/:id links directly.
 async function openFirstSop(page) {
   await page.goto(`${APP_URL}/sops`)
   await settle(page)
-  const link = page.locator('a[href^="/sops/"]:not([href="/sops/new"])').first()
-  if (await link.count()) {
-    await link.click()
+
+  const sopLink = () => page.locator('a[href^="/sops/"]:not([href="/sops/new"])').first()
+
+  // 1. A direct SOP link is present (table view, or already inside a category).
+  if (await sopLink().count()) {
+    await sopLink().click()
     await settle(page)
     return true
   }
+
+  // 2. Cards view: open the first category card (buttons show "Cards: N"),
+  //    then click the first SOP revealed within it.
+  const category = page.locator('button').filter({ hasText: /Cards:\s*\d/ }).first()
+  if (await category.count()) {
+    await category.click()
+    await settle(page)
+    if (await sopLink().count()) {
+      await sopLink().click()
+      await settle(page)
+      return true
+    }
+  }
+
+  console.log('  ⚠ openFirstSop: no SOP link found even after opening a category')
   return false
 }
 
@@ -176,26 +198,65 @@ async function captureSignIn(browser) {
 async function captureUserAreas(page) {
   await capture(page, 'dashboard', '/')
   await capture(page, 'sopository', '/sops')
+
+  // SOPository → click the "Operations" category card and capture the result.
+  await capture(page, 'sopository-operations', '/sops', async (p) => {
+    const card = p.getByText('Operations', { exact: true }).first()
+    if (await card.count()) { await card.click(); await p.waitForTimeout(900) }
+    else console.log('  ⚠ Operations card not found')
+  })
+
   await capture(page, 'sop-new', '/sops/new')
 
-  // SOP view (execution) + edit need a real SOP id.
-  console.log('\n📸 sop-view / sop-edit  (first SOP)')
+  // SOP view + execution + edit need a real SOP id.
+  console.log('\n📸 sop-view / sop-execution / sop-edit  (first SOP)')
   if (await openFirstSop(page)) {
     await shot(page, 'sop-view')
+    // Start (or resume) the run to show the execution/step view.
+    const start = page.getByRole('button', { name: /^(start|resume)/i }).first()
+    if (await start.count()) { await start.click(); await settle(page) }
+    await shot(page, 'sop-execution')
     const url = page.url()
     const id = url.split('/sops/')[1]?.split(/[/?#]/)[0]
     if (id) await capture(page, 'sop-edit', `/sops/${id}/edit`)
   } else {
-    console.log('  ⚠ No SOPs found — create one to capture sop-view/sop-edit')
+    console.log('  ⚠ No SOPs found — create one to capture sop-view/sop-execution/sop-edit')
   }
 
-  await capture(page, 'tasks', '/tasks')
+  // Tasks → capture each view (Kanban, Cards, Table, Calendar).
+  console.log('\n📸 tasks views')
+  await page.goto(`${APP_URL}/tasks`)
+  await settle(page)
+  for (const [label, name] of [
+    ['Kanban', 'tasks-kanban'],
+    ['Cards', 'tasks-cards'],
+    ['Table', 'tasks-table'],
+    ['Calendar', 'tasks-calendar'],
+  ]) {
+    try {
+      const btn = page.getByRole('button', { name: `${label} view` }).first()
+      if (await btn.count()) { await btn.click(); await page.waitForTimeout(900) }
+      else console.log(`  ⚠ ${label} view toggle not found`)
+      await shot(page, name)
+    } catch (err) {
+      console.log(`  ⚠ skipped ${name}: ${err.message}`)
+    }
+  }
+
   await capture(page, 'tags', '/tags')
   await capture(page, 'templates', '/templates')
   await capture(page, 'reporting', '/reporting')
+
+  // Process Maps → open the first workflow to show its diagram.
   await capture(page, 'process-maps', '/process-maps')
+  await capture(page, 'process-maps-diagram', '/process-maps', async (p) => {
+    const wf = p.locator('button').filter({ hasText: /nodes|connections/ }).first()
+    if (await wf.count()) { await wf.click(); await p.waitForTimeout(2500) }
+    else console.log('  ⚠ no workflow to open')
+  })
+
   await capture(page, 'agentic-skills', '/agentic/skills')
-  await capture(page, 'agentic-tasks', '/agentic/tasks')
+  await capture(page, 'agentic-tasks', '/agentic/tasks') // Agentic Ops → Agent Tasks
   await capture(page, 'changelog', '/changelog')
 
   // Personal settings (single scrolling page — top shows profile).
@@ -207,17 +268,94 @@ async function captureUserAreas(page) {
 }
 
 async function captureAdminAreas(page) {
-  await capture(page, 'assignments', '/assignments')
-  await capture(page, 'audit', '/audit')
-  await capture(page, 'prompt-management', '/settings/prompts')
+  // Organisation Settings — click each tab in order (by label, so it survives
+  // tier-gated tabs shifting index).
+  console.log('\n📸 organisation settings tabs')
+  await page.goto(`${APP_URL}/organisation-settings`)
+  await settle(page)
+  const orgTabs = [
+    [/^Organisation$/, 'org-organisation'],
+    [/Invite Users/, 'org-invite-users'],
+    [/Manage Users/, 'org-manage-users'],
+    [/Import\/?Export/, 'org-import-export'],
+    [/Subscription/, 'org-subscription'],
+    [/AI ?& ?LLM/, 'org-ai-llm'],
+    [/Automation/, 'org-automation'],
+    [/Agentic Services/, 'org-agentic'],
+  ]
+  for (const [label, name] of orgTabs) {
+    try {
+      const tab = page.getByRole('tab', { name: label }).first()
+      if (await tab.count()) {
+        await tab.click()
+        await page.waitForTimeout(1000)
+        await shot(page, name)
+      } else {
+        console.log(`  ⚠ tab not found: ${name}`)
+      }
+    } catch (err) {
+      console.log(`  ⚠ skipped ${name}: ${err.message}`)
+    }
+  }
 
-  // Organisation Settings tabs are index-driven (?tab=N).
-  await capture(page, 'org-organisation', '/organisation-settings?tab=0')
-  await capture(page, 'org-invite-users', '/organisation-settings?tab=1')
-  await capture(page, 'org-manage-users', '/organisation-settings?tab=2')
-  await capture(page, 'org-import-export', '/organisation-settings?tab=3')
-  await capture(page, 'org-subscription', '/organisation-settings?tab=4')
-  await capture(page, 'org-ai-llm', '/organisation-settings?tab=5')
+  await capture(page, 'assignments', '/assignments')
+
+  // Audit & Evidence — list, then open the first row's evidence breakout, then PDF.
+  await capture(page, 'audit', '/audit')
+  await captureAuditEvidence(page)
+
+  await capture(page, 'prompt-management', '/settings/prompts')
+}
+
+// Open the first audit row's evidence slide-over, screenshot it, then export the
+// evidence PDF and (if poppler is installed) render each PDF page to a PNG.
+async function captureAuditEvidence(page) {
+  console.log('\n📸 audit-evidence-detail + PDF  (/audit first row)')
+  try {
+    await page.goto(`${APP_URL}/audit`)
+    await settle(page)
+    const row = page.locator('table tbody tr').first()
+    if (!(await row.count())) {
+      console.log('  ⚠ no audit rows to open')
+      return
+    }
+    await row.click()
+    // Wait for the "Execution Evidence" slide-over to populate.
+    await page.getByText('Execution Evidence').first().waitFor({ timeout: 10000 }).catch(() => {})
+    await page.waitForTimeout(1500)
+    await shot(page, 'audit-evidence-detail')
+
+    // Click the PDF button inside the slide-over and capture the download.
+    const overlay = page.locator('div.z-50').first()
+    const pdfBtn = overlay.getByRole('button', { name: /PDF/i }).first()
+    if (!(await pdfBtn.count())) {
+      console.log('  ⚠ PDF button not found in evidence panel')
+      return
+    }
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 20000 }).catch(() => null),
+      pdfBtn.click(),
+    ])
+    if (!download) {
+      console.log('  ⚠ PDF download did not start')
+      return
+    }
+    const pdfPath = path.join(IMAGES_DIR, 'audit-evidence.pdf')
+    await download.saveAs(pdfPath)
+    console.log('  ✓ audit-evidence.pdf')
+
+    // Render every PDF page to a PNG if poppler's pdftoppm is available.
+    try {
+      execSync('command -v pdftoppm', { stdio: 'ignore' })
+      const prefix = path.join(IMAGES_DIR, 'audit-evidence-pdf')
+      execSync(`pdftoppm -png -r 110 "${pdfPath}" "${prefix}"`, { stdio: 'ignore' })
+      console.log('  ✓ audit-evidence-pdf-*.png (all pages)')
+    } catch {
+      console.log('  ℹ pdftoppm not found — saved PDF only. `brew install poppler` to also export page PNGs.')
+    }
+  } catch (err) {
+    console.log(`  ⚠ skipped audit evidence: ${err.message}`)
+  }
 }
 
 // ── Main ─────────────────────────────────────────────────────────────────────

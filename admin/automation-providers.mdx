@@ -1,0 +1,41 @@
+---
+title: "Automation providers"
+description: "Connect automation platforms so SOP steps can trigger workflows."
+---
+
+The **Automation** tab in Organisation Settings is where you connect the automation platforms your SOPs trigger — such as **n8n**, **ActivePieces** and **Rundeck**. Once connected, a step can fire a workflow and the response is recorded against the execution.
+
+<Frame caption="Automation providers in Organisation Settings">
+  <img src="/images/screenshots/org-automation.png" alt="Automation provider configuration" />
+</Frame>
+
+## Connect a provider
+
+<Steps>
+  <Step title="Open the Automation tab">
+    Organisation switcher → **Organisation Settings** → **Automation**.
+  </Step>
+  <Step title="Choose your platform">
+    Select the automation platform you run (e.g. n8n).
+  </Step>
+  <Step title="Enter the connection details">
+    Provide the endpoint URL and API key/credentials for your instance.
+  </Step>
+  <Step title="Test and save">
+    Use **Test** to confirm connectivity, then save the configuration.
+  </Step>
+</Steps>
+
+<Frame caption="Configuring an n8n automation provider">
+  <img src="/images/screenshots/AutomationProvider.png" alt="n8n automation provider configuration" />
+</Frame>
+
+Enter a **Configuration Name**, the **API URL** and **API Key** for your instance, then **Test** — a successful test reports how many workflows were found. Tick **Set as default configuration** and **Save Configuration**.
+
+## How it's used during execution
+
+When an SOP (or step) with an automation rule runs, Process Central triggers the linked workflow and records the outcome. The response appears under the step's **Expected Result** during execution, and in [Audit & Evidence](/admin/audit-evidence) afterwards.
+
+<Note>
+Automation is a plan-dependent capability. If you don't see the **Automation** tab, check your subscription tier.
+</Note>
