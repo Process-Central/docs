@@ -9,6 +9,9 @@
     "dark": "#1d4ed8"
   },
   "favicon": "/favicon.png",
+  "appearance": {
+    "default": "dark"
+  },
   "navigation": {
     "tabs": [
       {
