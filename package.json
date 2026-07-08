@@ -1,6 +1,6 @@
 {
   "name": "processcentral-docs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Process Central user & admin documentation (Mintlify) + screenshot capture",
   "scripts": {
     "dev": "source ~/.nvm/nvm.sh && nvm use 20 && mintlify dev",
