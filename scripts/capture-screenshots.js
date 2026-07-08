@@ -208,7 +208,11 @@ async function captureUserAreas(page) {
 
   await capture(page, 'sop-new', '/sops/new')
 
-  // SOP view + execution + edit need a real SOP id.
+  // SOP view + execution + edit need a real SOP id. The SOP view/edit screens
+  // are now split into three sections — "The What" (details & overview),
+  // "The Why" (linked governance: policies, standards, objectives, risks) and
+  // "The How" (the steps) — so the default screenshot naturally shows the new
+  // "The Why" section alongside the other two.
   console.log('\n📸 sop-view / sop-execution / sop-edit  (first SOP)')
   if (await openFirstSop(page)) {
     await shot(page, 'sop-view')
@@ -245,6 +249,10 @@ async function captureUserAreas(page) {
 
   await capture(page, 'tags', '/tags')
   await capture(page, 'templates', '/templates')
+
+  // Governance — Policies, Standards, Objectives, Risks, Traceability tabs.
+  await captureGovernance(page)
+
   await capture(page, 'reporting', '/reporting')
 
   // Process Maps → open the first workflow to show its diagram.
@@ -265,6 +273,35 @@ async function captureUserAreas(page) {
     await p.evaluate(() => window.scrollTo(0, 500))
     await p.waitForTimeout(300)
   })
+}
+
+// Governance registry — a single page with in-page tab buttons (Policies,
+// Standards, Objectives, Risks, Traceability), not separate routes.
+async function captureGovernance(page) {
+  console.log('\n📸 governance tabs')
+  await page.goto(`${APP_URL}/governance`)
+  await settle(page)
+  const govTabs = [
+    ['Policies', 'governance-policies'],
+    ['Standards', 'governance-standards'],
+    ['Objectives', 'governance-objectives'],
+    ['Risks', 'governance-risks'],
+    ['Traceability', 'governance-traceability'],
+  ]
+  for (const [label, name] of govTabs) {
+    try {
+      const tab = page.getByRole('button', { name: label }).first()
+      if (await tab.count()) {
+        await tab.click()
+        await page.waitForTimeout(700)
+        await shot(page, name)
+      } else {
+        console.log(`  ⚠ tab not found: ${name}`)
+      }
+    } catch (err) {
+      console.log(`  ⚠ skipped ${name}: ${err.message}`)
+    }
+  }
 }
 
 async function captureAdminAreas(page) {
